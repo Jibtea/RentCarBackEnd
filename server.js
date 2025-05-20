@@ -9,6 +9,8 @@ const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cors = require('cors');
 
+
+
 //load env
 dotenv.config({ path: './config/config.env' });
 
@@ -25,8 +27,6 @@ const auths = require('./routes/auths');
 const app = express();
 app.use(express.json());
 
-//Sanitize data ป้องกันการใส่queryมาในระบบ
-app.use(mongoSanitize());
 
 //Helmet protect xss...
 app.use(helmet());
@@ -38,10 +38,18 @@ app.use(xss());
 app.use(hpp());
 
 //Cross-Origin Resource Sharing ไว้อนุญาตให้ใครดึงapiได้บ้าง
-app.use(cors());
-// app.use(cors({
-//   origin: 'http://localhost:3000'
-// }));
+// app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: true,
+}));
+
+// //fixed bug
+// app.use(
+//   mongoSanitize({
+//     replaceWith: "_removed_", // จะไม่ set req.query ใหม่
+//   })
+// );
 
 //rate limit
 const limiter = rateLimit({
@@ -57,6 +65,16 @@ app.use(cookieParser());
 app.use('/api/carProviders', carProviders);
 app.use('/api/cars', cars);
 app.use('/api/auths', auths);
+
+
+//Sanitize data ป้องกันการใส่queryมาในระบบ
+app.use(mongoSanitize());
+//แก้แบบเปลี่ยนเป็นstring
+// app.use(
+//   mongoSanitize({
+//     replaceWith: '_removed_' // แทนที่ค่าไม่ปลอดภัยด้วย string แทนการแก้ไข object ตรง ๆ
+//   })
+// );
 
 const PORT = process.env.PORT || 5000;
 
